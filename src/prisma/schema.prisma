@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @map("user_id") @db.ObjectId
+
+  type              String
+  provider          String
+  providerAccountId String @map("provider_account_id")
+
+  refresh_token String? @db.String
+  access_token  String? @db.String
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.String
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid()) @map("_id") @db.ObjectId
+  sessionToken String   @unique @map("session_token")
+  expires      DateTime
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id") @db.ObjectId
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image  String?
+  coverImage    String?
+  username      String?   @unique
+
+  bio   String?
+  links String[]
+
+  accounts        Account[]
+  sessions        Session[]
+  
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  @@map("users")
+}
+model VerificationToken {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  email   String   @unique
+  otp     String
+  expires DateTime
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
+
+  @@map("verificationtokens")
+}
